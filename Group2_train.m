@@ -9,6 +9,12 @@ clc;
 
 %% Connect equipment
 a = arduino('COM4');
-%%
 a.servoAttach(1);
-a.servoWrite(1, 70);
+a.pinMode(14, 'output');
+a.pinMode(15, 'output');
+%right led pin number
+rLed = 14;
+%left led pin number
+lLed = 15;
+approach = 2;
+departure = 3;
