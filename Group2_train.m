@@ -9,4 +9,6 @@ clc;
 
 %% Connect equipment
 a = arduino('COM4');
-
+%%
+a.servoAttach(1);
+a.servoWrite(1, 70);
