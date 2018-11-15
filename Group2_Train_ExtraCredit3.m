@@ -41,10 +41,6 @@ departureGreen = 9;
 approach = 2;
 departure = 3;
 
-%setup motor
-a.motorRun(1,'forward');
-a.motorSpeed(1, 170);
-
 %Drop gate for safe start
 a.servoWrite(1, 170);
 %boolean for if gate is down  
@@ -88,6 +84,27 @@ a.randomGateLeds(1);
 loopCounter = 0;
 
 %% Infinite Loop
+%ask user if train is in a rural or urban setting
+location = input('Is the train in an urban or rural setting: ', 's');
+%verify that the user gave a correct input
+while(~strcmp(location, 'urban') && ~strcmp(location, 'rural'))
+    location = input('\nInvalid input try again\nIs the train in an urban or rural setting: ', 's');
+end
+%set gate delay based on user input
+if(strcmp(location, 'urban'))
+    gateDelay = .9;
+elseif(strcmp(location, 'rural'))
+    gateDelay = 1.4;
+end
+
+
+
+%setup motor
+a.motorRun(1,'forward');
+a.motorSpeed(1, 170);
+
+
+
 while 1
     %Flash lights
     if(flash)
@@ -116,7 +133,7 @@ while 1
     %Timing on gate
     %if 1.2 to 2 seconds have passed after crossing the approach gate and the
     %gate is up, drop the gate
-    if(readApproach == 1 && toc() - approachDelay > 1.2 && toc() - approachDelay < 2 && ~gateDown)
+    if(readApproach == 1 && toc() - approachDelay > gateDelay && toc() - approachDelay < 2 && ~gateDown)
         a.servoWrite(1, 170);
         gateDown = 1;
     end
