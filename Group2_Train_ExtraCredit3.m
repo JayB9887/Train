@@ -25,6 +25,8 @@ a.pinMode(7, 'output');
 %departure gates
 a.pinMode(8, 'output');
 a.pinMode(9, 'output');
+
+
 %% Setup before loop
 
 %LED pin numbers
@@ -82,6 +84,9 @@ stopped = 0;
 %sets random gate leds
 a.randomGateLeds(1);
 
+%variable to count how many times it has looped the track
+loopCounter = 0;
+
 %% Infinite Loop
 while 1
     %Flash lights
@@ -115,26 +120,26 @@ while 1
         a.servoWrite(1, 170);
         gateDown = 1;
     end
-    
-    %checking if upcoming departure gate is clear
-    if(~stopped && readApproach && a.digitalRead(departureRed) && (toc() - approachDelay) * urbanSpeed > 11.25 * pi - 2)
-        a.motorRun(1, 'release');
-        stopped = 1;
-    elseif(readApproach && a.digitalRead(departureRed) == 0)
-        a.motorRun(1, 'forward');
-        a.motorSpeed(1, 170);
-        stopped = 0;
+    if(loopCounter >=3)
+        %checking if upcoming departure gate is clear
+        if(~stopped && readApproach && (toc() - approachDelay) * urbanSpeed > (11.25 * pi) - 4 && a.digitalRead(departureRed))
+            a.motorSpeed(1, 0);
+            stopped = 1;
+        elseif(stopped && readApproach && a.digitalRead(departureRed) == 0)
+            a.motorSpeed(1, 170);
+            a.motorRun(1, 'forward');
+            stopped = 0;
+        end
+        %checking if upcoming approach gate is clear
+        if(~stopped && readDeparture && (toc() - departureDelay) * ruralSpeed > (11.25 * pi) - 4 && a.digitalRead(approachRed))
+            a.motorRun(1, 0);
+            stopped = 1;
+        elseif(readDeparture && stopped && a.digitalRead(approachRed) == 0)
+            a.motorSpeed(1, 255);
+            a.motorRun(1, 'forward');
+            stopped = 0;
+        end
     end
-    %checking if upcoming approach gate is clear
-    if(~stopped && readDeparture && a.digitalRead(approachRed) && (toc() - departureDelay) * ruralSpeed > 11.25 * pi - 2)
-        a.motorRun(1, 'release');
-        stopped = 1;
-    elseif(readDeparture && a.digitalRead(approachRed) == 0)
-        a.motorRun(1, 'forward');
-        a.motorSpeed(1, 255);
-        stopped = 0;
-    end
-    
     
     %checking approach sensor
     aa = a.analogRead(approach);
@@ -143,8 +148,12 @@ while 1
         aa = a.analogRead(approach);
     end
     if((aa > 250) && (readApproach == 0))
+        %variables to declare which side of the track the train is on
         readDeparture = 0;
         readApproach = 1;
+        
+        %increment loop counter by one
+        loopCounter = loopCounter + 1;
         
         %train entering urban area
         %start flashing lights
@@ -156,8 +165,8 @@ while 1
         %start delay on gate
         approachDelay = toc();
         
-        %recording rural speed
-        if(departureDelay)
+         %recording rural speed
+        if(departureDelay && (approachDelay - departureDelay) - (1/(ruralSpeed / (11.25 * pi))) < .75)
             ruralSpeed = 11.25 * pi / (approachDelay - departureDelay);
         end
         
@@ -179,8 +188,8 @@ while 1
         %speed up train
         a.motorSpeed(1, 255);
         
-        %recording urban speed
-        if(approachDelay)
+         %recording urban speed
+        if(approachDelay && (departureDelay - approachDelay) - (1/(urbanSpeed / (11.25 * pi))) < .75) 
             urbanSpeed = 11.25 * pi / (departureDelay - approachDelay);
         end
         
